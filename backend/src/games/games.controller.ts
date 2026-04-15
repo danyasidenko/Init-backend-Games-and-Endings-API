@@ -18,18 +18,17 @@ export class GamesController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
+  findOne(@Param('id') id: number) {
     return this.gamesService.findOne(id);
   }
 
-  // НОВИЙ МАРШРУТ: PATCH для оновлення
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateGameDto: UpdateGameDto) {
+  update(@Param('id') id: number, @Body() updateGameDto: UpdateGameDto) {
     return this.gamesService.update(id, updateGameDto);
   }
 
-  @Delete(':id') 
-  remove(@Param('id') id: string) { 
+  @Delete(':id')
+  remove(@Param('id') id: number) {
     return this.gamesService.remove(id);
   }
 }

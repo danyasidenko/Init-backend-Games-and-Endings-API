@@ -1,54 +1,42 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Game } from './entities/game.entity';
 import { CreateGameDto } from './dto/create-game.dto';
 import { UpdateGameDto } from './dto/update-game.dto';
 
-export interface Game {
-  id: string;
-  title: string;
-  genre: string;
-  totalEndings: number;
-}
-
 @Injectable()
 export class GamesService {
-  private games: Game[] = [];
+  constructor(
+    @InjectRepository(Game)
+    private gamesRepository: Repository<Game>,
+  ) {}
 
-  create(createGameDto: CreateGameDto) {
-    const newGame: Game = {
-      id: Date.now().toString(),
-      ...createGameDto,
-    };
-    this.games.push(newGame);
-    return newGame;
+  async create(createGameDto: CreateGameDto) {
+    const game = this.gamesRepository.create(createGameDto);
+    return await this.gamesRepository.save(game);
   }
 
-  findAll() {
-    return this.games;
+  async findAll() {
+    return await this.gamesRepository.find({ relations: ['endings'] });
   }
 
-  findOne(id: string) {
-    const game = this.games.find(g => g.id === id);
+  // ТУТ МАЄ БУТИ number!
+  async findOne(id: number) {
+    const game = await this.gamesRepository.findOne({ where: { id }, relations: ['endings'] });
     if (!game) throw new NotFoundException(`Гру з ID ${id} не знайдено`);
     return game;
   }
 
-  // НОВИЙ МЕТОД: Оновлення
-  update(id: string, updateGameDto: UpdateGameDto) {
-    const gameIndex = this.games.findIndex(g => g.id === id);
-    if (gameIndex === -1) throw new NotFoundException(`Гру з ID ${id} не знайдено`);
-    
-    // Оновлюємо існуючу гру новими даними
-    this.games[gameIndex] = { ...this.games[gameIndex], ...updateGameDto };
-    return this.games[gameIndex];
+  async update(id: number, updateGameDto: UpdateGameDto) {
+    const game = await this.findOne(id);
+    this.gamesRepository.merge(game, updateGameDto);
+    return await this.gamesRepository.save(game);
   }
 
-  // НОВИЙ МЕТОД: Видалення
-  remove(id: string) {
-    const gameIndex = this.games.findIndex(g => g.id === id);
-    if (gameIndex === -1) throw new NotFoundException(`Гру з id ${id} не знайдено`);
-    
-    const removedGame = this.games[gameIndex];
-    this.games.splice(gameIndex, 1); // Вирізаємо гру з масиву
-    return removedGame;
+  async remove(id: number) {
+    const game = await this.findOne(id);
+    await this.gamesRepository.remove(game);
+    return { message: `Гру ${id} видалено` };
   }
 }

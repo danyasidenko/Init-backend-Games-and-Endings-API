@@ -1,46 +1,48 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Ending } from './entities/ending.entity';
 import { CreateEndingDto } from './dto/create-ending.dto';
-import { UpdateEndingDto } from './dto/update-ending.dto';
-
-export interface Ending {
-  id: string;
-  gameId: string;
-  name: string;
-  description: string;
-  isDiscovered: boolean;
-}
 
 @Injectable()
 export class EndingsService {
-  private endings: Ending[] = [];
+  constructor(
+    @InjectRepository(Ending)
+    private endingsRepository: Repository<Ending>,
+  ) {}
 
-  create(createEndingDto: CreateEndingDto) {
-    const newEnding: Ending = {
-      id: Date.now().toString(),
+  async create(createEndingDto: CreateEndingDto) {
+    const ending = this.endingsRepository.create({
       ...createEndingDto,
-    };
-    this.endings.push(newEnding);
-    return newEnding;
+      game: { id: Number(createEndingDto.gameId) } as any,
+    });
+    return await this.endingsRepository.save(ending);
   }
 
-  findAll() {
-    return this.endings;
+  async findAll() {
+    return await this.endingsRepository.find({ relations: ['game'] });
   }
 
-  update(id: string, updateEndingDto: UpdateEndingDto) {
-    const index = this.endings.findIndex(e => e.id === id);
-    if (index === -1) throw new NotFoundException('Кінцівку не знайдено');
-    
-    this.endings[index] = { ...this.endings[index], ...updateEndingDto };
-    return this.endings[index];
+  // Цей метод шукає кінцівки за ID гри (його чекає контролер)
+  async findByGameId(gameId: string) {
+    return await this.endingsRepository.find({
+      where: { game: { id: Number(gameId) } },
+      relations: ['game'],
+    });
   }
 
-  remove(id: string) {
-    const index = this.endings.findIndex(e => e.id === id);
-    if (index === -1) throw new NotFoundException('Кінцівку не знайдено');
-    
-    const removed = this.endings[index];
-    this.endings.splice(index, 1);
-    return removed;
+  async findOne(id: number) {
+    const ending = await this.endingsRepository.findOne({ 
+      where: { id }, 
+      relations: ['game'] 
+    });
+    if (!ending) throw new NotFoundException(`Кінцівку з ID ${id} не знайдено`);
+    return ending;
+  }
+
+  async remove(id: number) {
+    const ending = await this.findOne(id);
+    await this.endingsRepository.remove(ending);
+    return { message: `Кінцівку ${id} видалено` };
   }
 }

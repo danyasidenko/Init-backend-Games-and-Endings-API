@@ -5,9 +5,9 @@ import { AppModule } from './app.module';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   
-  // Вмикаємо охоронця, який буде перевіряти всі вхідні дані
   app.useGlobalPipes(new ValidationPipe({
-    whitelist: true, // Відкидає всі зайві поля, яких немає в наших правилах
+    whitelist: true,
+    transform: true, // ЦЕЙ РЯДОК МАГІЧНИЙ: він перетворить "1" з URL на число 1
   }));
 
   await app.listen(3000);

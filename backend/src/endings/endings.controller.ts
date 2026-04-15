@@ -1,29 +1,23 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Query } from '@nestjs/common';
 import { EndingsService } from './endings.service';
-import { CreateEndingDto } from './dto/create-ending.dto';
-import { UpdateEndingDto } from './dto/update-ending.dto';
 
 @Controller('endings')
 export class EndingsController {
   constructor(private readonly endingsService: EndingsService) {}
 
   @Post()
-  create(@Body() createEndingDto: CreateEndingDto) {
+  create(@Body() createEndingDto: any) {
     return this.endingsService.create(createEndingDto);
   }
 
+  // @Query дозволяє нам приймати параметри в URL (наприклад: ?gameId=123)
   @Get()
-  findAll() {
+  findAll(@Query('gameId') gameId?: string) {
+    if (gameId) {
+      // Якщо в запиті є gameId, повертаємо кінцівки тільки для цієї гри
+      return this.endingsService.findByGameId(gameId);
+    }
+    // Інакше повертаємо всі існуючі кінцівки
     return this.endingsService.findAll();
-  }
-
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateEndingDto: UpdateEndingDto) {
-    return this.endingsService.update(id, updateEndingDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.endingsService.remove(id);
   }
 }
