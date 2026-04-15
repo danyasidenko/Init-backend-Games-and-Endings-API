@@ -1,9 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { CreateEndingDto } from './dto/create-ending.dto';
+import { UpdateEndingDto } from './dto/update-ending.dto';
 
-// Описуємо, як виглядає кінцівка
 export interface Ending {
   id: string;
-  gameId: string; // ID гри, до якої належить ця кінцівка
+  gameId: string;
   name: string;
   description: string;
   isDiscovered: boolean;
@@ -13,23 +14,33 @@ export interface Ending {
 export class EndingsService {
   private endings: Ending[] = [];
 
-  // Створення кінцівки
-  create(createEndingData: Omit<Ending, 'id'>) {
+  create(createEndingDto: CreateEndingDto) {
     const newEnding: Ending = {
       id: Date.now().toString(),
-      ...createEndingData,
+      ...createEndingDto,
     };
     this.endings.push(newEnding);
     return newEnding;
   }
 
-  // Отримання всіх кінцівок
   findAll() {
     return this.endings;
   }
 
-  // Фільтрація кінцівок для конкретної гри
-  findByGameId(gameId: string) {
-    return this.endings.filter(ending => ending.gameId === gameId);
+  update(id: string, updateEndingDto: UpdateEndingDto) {
+    const index = this.endings.findIndex(e => e.id === id);
+    if (index === -1) throw new NotFoundException('Кінцівку не знайдено');
+    
+    this.endings[index] = { ...this.endings[index], ...updateEndingDto };
+    return this.endings[index];
+  }
+
+  remove(id: string) {
+    const index = this.endings.findIndex(e => e.id === id);
+    if (index === -1) throw new NotFoundException('Кінцівку не знайдено');
+    
+    const removed = this.endings[index];
+    this.endings.splice(index, 1);
+    return removed;
   }
 }

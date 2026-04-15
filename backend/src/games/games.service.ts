@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { CreateGameDto } from './dto/create-game.dto';
+import { UpdateGameDto } from './dto/update-game.dto';
 
-// 1. Описуємо, як виглядає наша гра
 export interface Game {
   id: string;
   title: string;
@@ -10,30 +11,44 @@ export interface Game {
 
 @Injectable()
 export class GamesService {
-  // 2. Це наша "база даних" на сьогодні (просто пустий масив)
   private games: Game[] = [];
 
-  // 3. Метод для додавання нової гри
-  create(createGameData: Omit<Game, 'id'>) {
+  create(createGameDto: CreateGameDto) {
     const newGame: Game = {
-      id: Date.now().toString(), // Генеруємо унікальний ID
-      ...createGameData,
+      id: Date.now().toString(),
+      ...createGameDto,
     };
     this.games.push(newGame);
-    return newGame; // Повертаємо створену гру
+    return newGame;
   }
 
-  // 4. Метод для отримання списку всіх ігор
   findAll() {
     return this.games;
   }
 
-  // 5. Метод для пошуку однієї гри за ID
   findOne(id: string) {
     const game = this.games.find(g => g.id === id);
-    if (!game) {
-      throw new NotFoundException(`Гру з ID ${id} не знайдено`);
-    }
+    if (!game) throw new NotFoundException(`Гру з ID ${id} не знайдено`);
     return game;
+  }
+
+  // НОВИЙ МЕТОД: Оновлення
+  update(id: string, updateGameDto: UpdateGameDto) {
+    const gameIndex = this.games.findIndex(g => g.id === id);
+    if (gameIndex === -1) throw new NotFoundException(`Гру з ID ${id} не знайдено`);
+    
+    // Оновлюємо існуючу гру новими даними
+    this.games[gameIndex] = { ...this.games[gameIndex], ...updateGameDto };
+    return this.games[gameIndex];
+  }
+
+  // НОВИЙ МЕТОД: Видалення
+  remove(id: string) {
+    const gameIndex = this.games.findIndex(g => g.id === id);
+    if (gameIndex === -1) throw new NotFoundException(`Гру з id ${id} не знайдено`);
+    
+    const removedGame = this.games[gameIndex];
+    this.games.splice(gameIndex, 1); // Вирізаємо гру з масиву
+    return removedGame;
   }
 }
