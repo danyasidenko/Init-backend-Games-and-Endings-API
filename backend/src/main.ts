@@ -4,7 +4,8 @@ import { AppModule } from './app.module';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  
+
+  app.enableCors();
   app.useGlobalPipes(new ValidationPipe({
     whitelist: true,
     transform: true, // ЦЕЙ РЯДОК МАГІЧНИЙ: він перетворить "1" з URL на число 1
